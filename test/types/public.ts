@@ -12,6 +12,7 @@ import {
   type ProxyGroup,
   isProxyGroup,
 } from '../../src/index.js'
+
 const client = createClashClient({
   baseUrl: 'https://example.invalid/controller/',
 })
@@ -27,6 +28,7 @@ const bad: ConfigPatch = { 'mixed-port': '7890' }
 const badTun: ConfigPatch = { tun: { enable: 'yes' } }
 void bad
 void badTun
+
 async function declarations(proxy: Proxy, connection: Connection) {
   // @ts-expect-error Connections are not an HTTP JSON stream.
   client.connections.watch({ transport: 'http-json' })
@@ -50,6 +52,7 @@ async function declarations(proxy: Proxy, connection: Connection) {
   })
   return { group, single, groups, port, stored }
 }
+
 void declarations
 
 const extension = client.extend((transport) => {
@@ -75,6 +78,7 @@ const refindClient: RefindExtension = client.extend(refind)
 const toggled: Promise<void> = refindClient.rules.toggleByUuid('uuid')
 // @ts-expect-error Toggle does not accept a target disabled state.
 void refindClient.rules.toggleByUuid('uuid', true)
+
 function narrowRefindRule(rule: import('../../src/index.js').Rule) {
   if (isRefindRule(rule)) {
     const narrowed: RefindRule = rule
@@ -83,5 +87,6 @@ function narrowRefindRule(rule: import('../../src/index.js').Rule) {
   }
   return undefined
 }
+
 void toggled
 void narrowRefindRule

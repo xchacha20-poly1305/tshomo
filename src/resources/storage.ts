@@ -3,6 +3,7 @@ import { InputError } from '../errors.js'
 import type { RequestOptions } from '../options.js'
 import type { JsonValue } from '../types.js'
 import type { HttpContext } from '../transport/http.js'
+
 export function storage(context: HttpContext) {
   function getJson(
     key: string,
@@ -14,6 +15,7 @@ export function storage(context: HttpContext) {
     decoder: Decoder<T>,
     options?: RequestOptions,
   ): Promise<T>
+
   function getJson<T>(
     key: string,
     decoder?: Decoder<T>,
@@ -26,6 +28,7 @@ export function storage(context: HttpContext) {
       options,
     )
   }
+
   return {
     getBytes: (key: string, options?: RequestOptions) =>
       context.request(

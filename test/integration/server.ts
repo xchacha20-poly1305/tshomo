@@ -5,6 +5,7 @@ import {
 } from 'node:http'
 import { once } from 'node:events'
 import { WebSocketServer } from 'ws'
+
 export async function localServer(
   handler?: (request: IncomingMessage, response: ServerResponse) => void,
 ) {

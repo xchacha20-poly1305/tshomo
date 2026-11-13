@@ -43,6 +43,7 @@ async function sample<T>(
     scope.finish()
   }
 }
+
 export function metrics(context: HttpContext, factory?: WebSocketFactory) {
   return {
     watchTraffic: (options?: StreamOptions) =>

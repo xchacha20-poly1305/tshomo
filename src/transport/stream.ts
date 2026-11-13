@@ -29,6 +29,7 @@ function retryable(error: unknown): boolean {
     (error instanceof HttpError && error.status >= 500)
   )
 }
+
 export function watch<T>(
   context: HttpContext,
   factory: WebSocketFactory | undefined,
@@ -93,6 +94,7 @@ export function watch<T>(
     }
   }
   const unown = context.own(() => stop())
+
   function stop(error?: unknown, drain = false) {
     if (terminal) {
       if (!drain) {
@@ -121,13 +123,16 @@ export function watch<T>(
       }
     }
   }
+
   function abort() {
     stop(context.cancellation(options.signal?.reason))
   }
+
   options.signal?.addEventListener('abort', abort, { once: true })
   if (options.signal?.aborted) {
     abort()
   }
+
   function push(value: T) {
     if (terminal) {
       return
@@ -146,6 +151,7 @@ export function watch<T>(
       queue.push(value)
     }
   }
+
   async function run() {
     let attempts = 0
     while (!terminal) {
@@ -240,6 +246,7 @@ export function watch<T>(
       }
     }
   }
+
   return {
     get state() {
       return state

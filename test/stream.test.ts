@@ -56,6 +56,7 @@ class FakeSocket implements ClashSocket {
     )
   }
 }
+
 function setup() {
   const sockets: FakeSocket[] = []
   const urls: string[] = []
@@ -79,6 +80,7 @@ function setup() {
   }
   return { client, sockets, urls, socket }
 }
+
 afterEach(() => {
   vi.useRealTimers()
   vi.restoreAllMocks()

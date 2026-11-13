@@ -1,6 +1,7 @@
 import * as d from '../decode.js'
 import type { RequestOptions, UpgradeOptions } from '../options.js'
 import type { HttpContext } from '../transport/http.js'
+
 export function system(context: HttpContext) {
   return {
     hello: (options?: RequestOptions) =>

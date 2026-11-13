@@ -32,7 +32,7 @@
     "test:browser": "bun run build && playwright test",
     "build": "tsc -p tsconfig.json",
     "test:package": "bun run build && node scripts/test-package.mjs",
-    "format": "prettier --write ."
+    "format": "eslint . --fix && prettier --write ."
   },
   "devDependencies": {
     "@babel/core": "^8.1.0",

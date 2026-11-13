@@ -17,6 +17,7 @@ export interface ConnectionOptions {
   idleTimeoutMs: number
   maxFrameBytes: number
 }
+
 export function readWebSocket(
   factory: WebSocketFactory | undefined,
   url: string,
@@ -43,6 +44,7 @@ export function readWebSocket(
     let opened = false
     let connectTimer: ReturnType<typeof setTimeout> | undefined
     let idleTimer: ReturnType<typeof setTimeout> | undefined
+
     function cleanup() {
       clearTimeout(connectTimer)
       clearTimeout(idleTimer)
@@ -58,6 +60,7 @@ export function readWebSocket(
         /* the handle is already detached */
       }
     }
+
     function finish(error?: unknown) {
       if (done) {
         return
@@ -70,6 +73,7 @@ export function readWebSocket(
         resolve()
       }
     }
+
     function idle() {
       clearTimeout(idleTimer)
       if (options.idleTimeoutMs) {
@@ -79,6 +83,7 @@ export function readWebSocket(
         )
       }
     }
+
     function open() {
       if (done || opened) {
         return
@@ -88,6 +93,7 @@ export function readWebSocket(
       idle()
       feed.open()
     }
+
     function message(event: { readonly data: unknown }) {
       if (done) {
         return
@@ -113,15 +119,19 @@ export function readWebSocket(
         finish(error)
       }
     }
+
     function error() {
       finish(new StreamError())
     }
+
     function close(event: { readonly code: number }) {
       finish(event.code === 1000 ? undefined : new StreamError())
     }
+
     function abort() {
       finish(new AbortError())
     }
+
     socket.addEventListener('open', open)
     socket.addEventListener('message', message)
     socket.addEventListener('error', error)

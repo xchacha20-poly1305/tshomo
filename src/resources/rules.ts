@@ -2,6 +2,7 @@ import { rules as decode } from '../decode.js'
 import { InputError } from '../errors.js'
 import type { RequestOptions } from '../options.js'
 import type { HttpContext } from '../transport/http.js'
+
 export function rules(context: HttpContext) {
   return {
     list: (options?: RequestOptions) =>

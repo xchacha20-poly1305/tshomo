@@ -8,6 +8,7 @@ import type {
 import type { HttpContext } from '../transport/http.js'
 import { watch } from '../transport/stream.js'
 import { duration } from '../transport/url.js'
+
 export function connections(context: HttpContext, factory?: WebSocketFactory) {
   return {
     snapshot: (options?: RequestOptions) =>

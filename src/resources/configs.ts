@@ -7,6 +7,7 @@ import type {
 } from '../options.js'
 import type { ConfigPatch } from '../types.js'
 import type { HttpContext } from '../transport/http.js'
+
 export function configs(context: HttpContext) {
   return {
     get: (options?: RequestOptions) =>

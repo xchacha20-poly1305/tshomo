@@ -34,9 +34,11 @@ export const number = (v: unknown): v is number =>
   typeof v === 'number' && Number.isFinite(v)
 const boolean = (v: unknown): v is boolean => typeof v === 'boolean'
 const port = (v: unknown): v is string | number => string(v) || number(v)
+
 export function array<T>(guard: Guard<T>): Guard<T[]> {
   return (v): v is T[] => Array.isArray(v) && v.every(guard)
 }
+
 export function optional(
   v: Record<string, unknown>,
   keys: string[],
@@ -44,6 +46,7 @@ export function optional(
 ): boolean {
   return keys.every((key) => !Object.hasOwn(v, key) || guard(v[key]))
 }
+
 function fields(
   v: unknown,
   strings: string[] = [],
@@ -57,6 +60,7 @@ function fields(
     optional(v, booleans, boolean)
   )
 }
+
 export function decoder<T>(guard: Guard<T>, label: string): Decoder<T> {
   return (v) => {
     if (!guard(v)) {
@@ -65,6 +69,7 @@ export function decoder<T>(guard: Guard<T>, label: string): Decoder<T> {
     return v
   }
 }
+
 export function parseJson(text: string): unknown {
   try {
     return JSON.parse(text)
@@ -72,6 +77,7 @@ export function parseJson(text: string): unknown {
     throw new DecodeError('Invalid JSON response')
   }
 }
+
 export const isJson: Guard<JsonValue> = (v): v is JsonValue =>
   v === null ||
   string(v) ||
@@ -132,12 +138,14 @@ export const delay = decoder(
   (v): v is Delay => object(v) && number(v.delay),
   'delay',
 )
+
 export function map<T>(guard: Guard<T>): Decoder<Record<string, T>> {
   return decoder(
     (v): v is Record<string, T> => object(v) && Object.values(v).every(guard),
     'resource map',
   )
 }
+
 export function envelope<T>(key: string, decode: Decoder<T>): Decoder<T> {
   return (v) => {
     if (!object(v) || !Object.hasOwn(v, key)) {
@@ -146,6 +154,7 @@ export function envelope<T>(key: string, decode: Decoder<T>): Decoder<T> {
     return decode(v[key])
   }
 }
+
 const subscription = (v: unknown): v is SubscriptionInfo =>
   fields(
     v,

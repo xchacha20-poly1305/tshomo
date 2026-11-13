@@ -92,9 +92,11 @@ export interface Proxy extends WireObject {
 export interface ProxyGroup extends Proxy {
   all: string[]
 }
+
 export function isProxyGroup(proxy: Proxy): proxy is ProxyGroup {
   return Array.isArray(proxy.all)
 }
+
 export interface SubscriptionLower extends WireObject {
   upload?: number
   download?: number
@@ -108,6 +110,7 @@ export interface SubscriptionUpper extends WireObject {
   Expire?: number
 }
 export type SubscriptionInfo = SubscriptionLower | SubscriptionUpper
+
 /** Bytes and Unix seconds, unchanged from the wire. Uppercase fields take precedence. */
 export function readSubscriptionInfo(info: SubscriptionInfo): {
   upload?: number
@@ -135,6 +138,7 @@ export function readSubscriptionInfo(info: SubscriptionInfo): {
   }
   return out
 }
+
 export interface ProxyProvider extends WireObject {
   name: string
   type?: string

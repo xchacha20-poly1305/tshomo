@@ -2,6 +2,7 @@ import { readFile } from 'node:fs/promises'
 import { it, expect } from 'vitest'
 import { createClashClient, readSubscriptionInfo } from '../src/index.js'
 import { object } from '../src/decode.js'
+
 it('decodes source-derived wire variants and retains unknown metadata', async () => {
   const fixtures: unknown = JSON.parse(
     await readFile(new URL('./fixtures/wire.json', import.meta.url), 'utf8'),

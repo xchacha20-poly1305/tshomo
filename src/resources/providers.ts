@@ -2,6 +2,7 @@ import * as d from '../decode.js'
 import type { DelayOptions, RequestOptions } from '../options.js'
 import type { HttpContext } from '../transport/http.js'
 import { delayRequest } from '../transport/delay.js'
+
 export function proxyProviders(context: HttpContext) {
   const root = ['providers', 'proxies']
   return {
@@ -54,6 +55,7 @@ export function proxyProviders(context: HttpContext) {
       ),
   }
 }
+
 export function ruleProviders(context: HttpContext) {
   return {
     list: (options?: RequestOptions) =>

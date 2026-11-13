@@ -1,5 +1,7 @@
 import { InputError } from '../errors.js'
+
 export type Query = Record<string, string | number | boolean | undefined>
+
 export function baseUrl(input: string): URL {
   let url: URL
   try {
@@ -25,6 +27,7 @@ export function baseUrl(input: string): URL {
   }
   return url
 }
+
 export function endpoint(
   base: URL,
   segments: readonly string[],
@@ -56,6 +59,7 @@ export function endpoint(
   }
   return url
 }
+
 export function websocketUrl(url: URL, secret?: string): string {
   const ws = new URL(url)
   ws.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:'
@@ -64,6 +68,7 @@ export function websocketUrl(url: URL, secret?: string): string {
   }
   return ws.href
 }
+
 export function duration(
   value: number,
   label: string,

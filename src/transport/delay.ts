@@ -2,6 +2,7 @@ import type * as d from '../decode.js'
 import type { Capability, DelayOptions, RequestOptions } from '../options.js'
 import type { HttpContext } from './http.js'
 import { duration } from './url.js'
+
 export function delayRequest<T>(
   context: HttpContext,
   capability: Capability,

@@ -54,6 +54,7 @@ export function extensionTransport(context: HttpContext): ExtensionTransport {
       throw new InputError('GET and HEAD requests cannot contain a body')
     }
   }
+
   return Object.freeze({
     json<T>(
       request: ExtensionRequest,

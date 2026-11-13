@@ -18,7 +18,7 @@ Use Bun 1.4.4 and Node.js 22 or newer. Commit dependency changes with `bun.lock`
 - `bun run build`: compile JavaScript, declarations, and source maps into `dist/`.
 - `bun run typecheck`: check source, tests, and examples without emitting files.
 - `bun run lint`: run ESLint and Prettier checks.
-- `bun run format`: apply Prettier formatting.
+- `bun run format`: apply ESLint fixes and Prettier formatting.
 - `bun run test`: run Vitest unit and integration tests.
 - `bun run test:package`: build, pack, and verify imports, declarations, private
   exports, and browser bundling from a temporary consumer.
@@ -30,7 +30,9 @@ Use Bun 1.4.4 and Node.js 22 or newer. Commit dependency changes with `bun.lock`
 
 Use two-space indentation, single quotes, no semicolons, and trailing commas.
 Keep code within 120 columns, use braces for control flow, and write one statement
-per line. Use camelCase for values, PascalCase for types, and descriptive lowercase
+per line. Separate the import block from the following code with a blank line, and
+leave blank lines around function declarations and function-valued variables.
+Use camelCase for values, PascalCase for types, and descriptive lowercase
 file names such as `json-stream.ts`. Use `.js` extensions in relative ESM imports.
 Validate `unknown` inputs; source lint rules reject `any`, type assertions, and
 regex literals. Prefer structured parsing and maintainable shared abstractions.

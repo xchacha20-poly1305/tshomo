@@ -2,6 +2,7 @@ import { dns as decode } from '../decode.js'
 import { InputError } from '../errors.js'
 import type { RequestOptions } from '../options.js'
 import type { HttpContext } from '../transport/http.js'
+
 export function dns(context: HttpContext) {
   return {
     query(input: { name: string; type?: string }, options?: RequestOptions) {
@@ -18,6 +19,7 @@ export function dns(context: HttpContext) {
     },
   }
 }
+
 export function cache(context: HttpContext) {
   return {
     flushFakeIp: (options?: RequestOptions) =>

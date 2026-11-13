@@ -14,13 +14,16 @@ import {
 } from '../src/index.js'
 
 const baseUrl = 'http://localhost/controller/'
+
 function response(value: unknown, status = 200) {
   return new Response(JSON.stringify(value), { status })
 }
+
 function mockClient(value: unknown) {
   const fetch = vi.fn<typeof globalThis.fetch>(async () => response(value))
   return { client: createClashClient({ baseUrl, fetch }), fetch }
 }
+
 describe('HTTP boundary', () => {
   it('validates URL and path before I/O; preserves prefixes and raw names', async () => {
     for (const value of [
@@ -183,6 +186,7 @@ describe('HTTP boundary', () => {
           ),
       })
     }
+
     const timeout = bodyClient()
     await expect(
       timeout.system.getVersion({ timeoutMs: 5 }),

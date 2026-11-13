@@ -11,6 +11,7 @@ import { metrics } from './resources/metrics.js'
 import { logs } from './resources/logs.js'
 import { dns, cache } from './resources/dns.js'
 import { storage } from './resources/storage.js'
+
 export function createClashClient(options: ClashClientOptions) {
   const context = new HttpContext(options)
   const transport = extensionTransport(context)
@@ -36,4 +37,5 @@ export function createClashClient(options: ClashClientOptions) {
     dispose: () => context.dispose(),
   }
 }
+
 export type ClashClient = ReturnType<typeof createClashClient>
