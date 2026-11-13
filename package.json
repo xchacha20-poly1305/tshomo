@@ -13,6 +13,10 @@
     ".": {
       "types": "./dist/index.d.ts",
       "import": "./dist/index.js"
+    },
+    "./extensions/refind": {
+      "types": "./dist/extensions/refind.d.ts",
+      "import": "./dist/extensions/refind.js"
     }
   },
   "files": [

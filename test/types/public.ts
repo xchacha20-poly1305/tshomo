@@ -1,4 +1,10 @@
 import {
+  refind,
+  isRefindRule,
+  type RefindExtension,
+  type RefindRule,
+} from '../../src/extensions/refind.js'
+import {
   createClashClient,
   type ConfigPatch,
   type Connection,
@@ -45,3 +51,37 @@ async function declarations(proxy: Proxy, connection: Connection) {
   return { group, single, groups, port, stored }
 }
 void declarations
+
+const extension = client.extend((transport) => {
+  // @ts-expect-error The extension facade does not expose credentials.
+  void transport.secret
+  return {
+    count: () =>
+      transport.json({ method: 'GET', path: ['custom'] }, (value) => {
+        if (typeof value !== 'number') {
+          throw new Error('Expected a number')
+        }
+        return value
+      }),
+  }
+})
+const count: Promise<number> = extension.count()
+// @ts-expect-error The decoder determines the response type.
+const wrongCount: Promise<string> = extension.count()
+void count
+void wrongCount
+
+const refindClient: RefindExtension = client.extend(refind)
+const toggled: Promise<void> = refindClient.rules.toggleByUuid('uuid')
+// @ts-expect-error Toggle does not accept a target disabled state.
+void refindClient.rules.toggleByUuid('uuid', true)
+function narrowRefindRule(rule: import('../../src/index.js').Rule) {
+  if (isRefindRule(rule)) {
+    const narrowed: RefindRule = rule
+    const uuid: string = narrowed.uuid
+    return uuid
+  }
+  return undefined
+}
+void toggled
+void narrowRefindRule

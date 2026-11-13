@@ -76,9 +76,116 @@ automatically detect capabilities. Declare known unavailable methods with
 `capabilities: { 'system.restart': 'unsupported' }` when creating a client to
 reject them locally. Unspecified capabilities are attempted normally.
 
-Smart, refind, honk, and script APIs are outside the current scope. Compatibility
-tests use local servers and source-derived fixtures, not live controller runs;
+Smart, reF1nd, honk, and script APIs are outside the core API scope. An optional
+reF1nd example extension is available below. Compatibility tests use local servers
+and source-derived fixtures, not live controller runs;
 see [fixture provenance](test/fixtures/README.md).
+
+## Caller-defined extensions
+
+The tshomo core does not identify forks or maintain a registry of their markers
+and features. Responses retain unknown fields so callers can implement their own
+detection. A marker is evidence for the caller to interpret; tshomo does not
+infer capabilities from branding or automatically probe custom endpoints.
+
+Use `client.extend(factory)` to define custom operations. The factory runs
+synchronously and returns your inferred extension type without changing the
+client's built-in resources:
+
+```ts
+import type { RequestOptions } from 'tshomo'
+
+const custom = client.extend((transport) => ({
+  async detect(options?: RequestOptions) {
+    const version = await client.system.getVersion(options)
+    return version['custom-marker'] === true
+  },
+  getCount(options?: RequestOptions) {
+    return transport.json(
+      { method: 'GET', path: ['custom', 'count'] },
+      (value) => {
+        if (typeof value !== 'number' || !Number.isFinite(value)) {
+          throw new Error('Expected a finite count')
+        }
+        return value
+      },
+      options,
+    )
+  },
+}))
+
+if (await custom.detect()) {
+  console.log(await custom.getCount())
+}
+```
+
+The example marker and endpoint are caller-defined. You can also inspect proxy,
+rule, or other response fields in ordinary functions without creating an extension.
+
+`ExtensionTransport` exposes `json(request, decoder, options?)`,
+`bytes(request, options?)`, and `void(request, options?)`. Requests specify an HTTP
+method, raw `path` segments relative to the base URL, optional `query`, and either
+`json` or `bytes` as a body. GET and HEAD requests cannot carry bodies. Each path
+segment is encoded separately; pass names as raw strings rather than pre-encoding
+them. JSON bodies use `Content-Type: application/json`; byte bodies have no
+Content-Type header. `json` requires a `Decoder<T>` that validates an `unknown`
+response. Decoder failures become `DecodeError`; business response semantics are
+entirely the extension's responsibility.
+
+Extensions share the client's authentication, fetch implementation, request
+timeout, cancellation, HTTP errors, and response cleanup. `client.dispose()`
+cancels pending extension requests and rejects subsequent requests. The transport
+does not expose credentials or accept arbitrary URLs or headers. Core
+`capabilities` settings apply to built-in operations; callers own any capability
+policy for their extensions. Extension factories can be reused across clients,
+and the public `ExtensionFactory<T>`, `ExtensionTransport`, and `ExtensionRequest`
+types allow them to be distributed as separate packages.
+
+### Published example: reF1nd
+
+`tshomo/extensions/refind` is an opt-in submodule shipped in the same package.
+It demonstrates a reusable extension using only tshomo's public API. The core
+entry point neither imports nor registers it.
+
+```ts
+import { createClashClient } from 'tshomo'
+import { isRefindRule, refind } from 'tshomo/extensions/refind'
+
+const client = createClashClient({ baseUrl: 'http://127.0.0.1:9090' })
+const extension = client.extend(refind)
+try {
+  const rules = await client.rules.list()
+  const toggleable = rules.filter(isRefindRule)
+  // Show these rules in your UI. On an explicit user toggle:
+  const selected = toggleable.find((rule) => rule.uuid === selectedUuid)
+  if (selected) {
+    await extension.rules.toggleByUuid(selected.uuid)
+    const refreshed = await client.rules.list()
+    console.log(refreshed)
+  }
+} finally {
+  client.dispose()
+}
+```
+
+`selectedUuid` is supplied by your application. `isRefindRule(rule)` narrows a
+core `Rule` to `RefindRule` by checking for a nonempty UUID. This checks response
+shape, not backend identity or endpoint support; the application decides whether
+to enable the extension. Other rules remain available through `client.rules`.
+
+The extension implements `rules.toggleByUuid(uuid, options?)` via
+`PUT /rules/{uuid}` with no request body and a 204 response. This endpoint flips
+the server's current state; it does not accept a desired `disabled` value.
+Do not automatically retry it after an ambiguous failure. Re-read rules to
+reconcile state. `disabled` can be omitted when false; test it with `=== true`.
+The server includes both DNS and routing rules in `GET /rules`.
+
+Protocol references: reF1nd/sing-box
+[stable rules implementation](https://github.com/reF1nd/sing-box/blob/732618a5989cd2566f072c374fe2f619200f33f9/experimental/clashapi/rules.go)
+and [testing rules implementation](https://github.com/reF1nd/sing-box/blob/17397d022647b73378705e1f91ff031dddaaec21/experimental/clashapi/rules.go).
+Tests reproduce these contracts using a local server; no live reF1nd controller
+has been tested. Other custom reF1nd endpoints are outside this example's scope.
+See [examples/refind.ts](examples/refind.ts) for a caller-side helper.
 
 ## Subscriptions and cleanup
 

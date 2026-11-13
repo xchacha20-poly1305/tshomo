@@ -20,7 +20,7 @@ import { baseUrl, duration, endpoint, type Query } from './url.js'
 
 export interface RequestSpec {
   method: string
-  path: string[]
+  path: readonly string[]
   query?: Query
   json?: unknown
   bytes?: Uint8Array
@@ -61,11 +61,14 @@ export class HttpContext {
     }
     this.capabilities = { ...options.capabilities }
   }
-  check(capability: Capability): void {
+  check(capability?: Capability): void {
     if (this.disposed) {
       throw new ClientDisposedError()
     }
-    if (this.capabilities?.[capability] === 'unsupported') {
+    if (
+      capability !== undefined &&
+      this.capabilities?.[capability] === 'unsupported'
+    ) {
       throw new UnsupportedCapabilityError(capability)
     }
   }
@@ -263,7 +266,7 @@ export class HttpContext {
     }
   }
   async request<T>(
-    capability: Capability,
+    capability: Capability | undefined,
     spec: RequestSpec,
     decode: (response: Response, signal: AbortSignal) => Promise<T>,
     options: RequestOptions = {},
@@ -302,7 +305,7 @@ export class HttpContext {
     }
   }
   json<T>(
-    capability: Capability,
+    capability: Capability | undefined,
     spec: RequestSpec,
     decode: Decoder<T>,
     options?: RequestOptions,
@@ -327,7 +330,7 @@ export class HttpContext {
     )
   }
   void(
-    capability: Capability,
+    capability: Capability | undefined,
     spec: RequestSpec,
     options?: RequestOptions,
   ): Promise<void> {
@@ -341,7 +344,7 @@ export class HttpContext {
     )
   }
   operation<T extends Record<string, unknown> & { status: string }>(
-    capability: Capability,
+    capability: Capability | undefined,
     spec: RequestSpec,
     decode: Decoder<T>,
     options?: RequestOptions,

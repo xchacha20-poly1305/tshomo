@@ -1,3 +1,4 @@
+import { extensionTransport, type ExtensionFactory } from './extensions.js'
 import type { ClashClientOptions } from './options.js'
 import { HttpContext } from './transport/http.js'
 import { system } from './resources/system.js'
@@ -12,6 +13,7 @@ import { dns, cache } from './resources/dns.js'
 import { storage } from './resources/storage.js'
 export function createClashClient(options: ClashClientOptions) {
   const context = new HttpContext(options)
+  const transport = extensionTransport(context)
   const factory = options.webSocketFactory
   return {
     system: system(context),
@@ -27,6 +29,10 @@ export function createClashClient(options: ClashClientOptions) {
     dns: dns(context),
     cache: cache(context),
     storage: storage(context),
+    extend<T>(factory: ExtensionFactory<T>): T {
+      context.check()
+      return factory(transport)
+    },
     dispose: () => context.dispose(),
   }
 }

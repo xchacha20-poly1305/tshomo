@@ -53,6 +53,11 @@ test.beforeAll(async () => {
       response.on('close', () => httpStreams--)
       response.writeHead(200, { 'Content-Type': 'application/json' })
       response.write('{"up":5,"down":6}\n')
+    } else if (
+      request.method === 'PUT' &&
+      request.url === '/controller/rules/browser-uuid'
+    ) {
+      response.writeHead(204).end()
     } else {
       response
         .writeHead(200, { 'Content-Type': 'application/json' })
@@ -149,4 +154,62 @@ test('page closure releases its live WebSocket connection', async ({
   expect(apiServer.wss.clients.size).toBe(1)
   await page.close()
   await expect.poll(() => apiServer.wss.clients.size).toBe(0)
+})
+
+test('caller extensions use the browser transport', async ({ page }) => {
+  const result = await page.evaluate(async (baseUrl) => {
+    const moduleUrl = '/dist/index.js'
+    const { createClashClient } = await import(moduleUrl)
+    const client = createClashClient({ baseUrl, secret: 'browser-secret' })
+    const extension = client.extend(
+      (transport: import('../../src/index.js').ExtensionTransport) => ({
+        version: () =>
+          transport.json({ method: 'GET', path: ['version'] }, (value) => {
+            if (
+              typeof value !== 'object' ||
+              value === null ||
+              !('version' in value) ||
+              typeof value.version !== 'string'
+            ) {
+              throw new Error('Expected a version string')
+            }
+            return value.version
+          }),
+      }),
+    )
+    try {
+      return await extension.version()
+    } finally {
+      client.dispose()
+    }
+  }, apiServer.baseUrl)
+  expect(result).toBe('browser-fixture')
+  expect(authorizations).toEqual(['Bearer browser-secret'])
+})
+
+test('published reF1nd module performs an authenticated cross-origin toggle', async ({
+  page,
+}) => {
+  const result = await page.evaluate(async (baseUrl) => {
+    const moduleUrl = '/dist/index.js'
+    const extensionUrl = '/dist/extensions/refind.js'
+    const { createClashClient } = await import(moduleUrl)
+    const { refind, isRefindRule } = await import(extensionUrl)
+    const client = createClashClient({ baseUrl, secret: 'browser-secret' })
+    try {
+      const extension = client.extend(refind)
+      await extension.rules.toggleByUuid('browser-uuid')
+      return isRefindRule({
+        type: 'default',
+        payload: '',
+        proxy: 'direct',
+        uuid: 'browser-uuid',
+      })
+    } finally {
+      client.dispose()
+    }
+  }, apiServer.baseUrl)
+  expect(result).toBe(true)
+  expect(preflight).toBeGreaterThan(0)
+  expect(authorizations).toEqual(['Bearer browser-secret'])
 })

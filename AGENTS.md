@@ -43,3 +43,24 @@ behavior, error handling, cancellation, and resource cleanup where applicable.
 No coverage threshold is configured. Run typecheck, lint, unit, package, and
 browser checks before submitting changes.
 
+## Extension Philosophy
+
+Keep the tshomo core independent of fork identities and fork-specific features. Do not add
+fork registries, built-in marker detectors, or capability tables inferred from
+backend branding. Preserve unknown response fields so callers can inspect their
+own markers. Callers own detection, feature policy, custom endpoints, and response
+decoders.
+
+Expose custom operations through `client.extend(factory)` and the public
+`ExtensionTransport`. Extensions must reuse the client's URL construction,
+authentication, timeout, cancellation, error handling, and disposal rather than
+accessing internal `HttpContext` or reimplementing HTTP. Keep extension types
+inferred from their factories without expanding core capability enums. Extensions
+do not mutate the client's built-in resources or automatically change capabilities.
+
+Optional, published example extensions belong in `src/extensions/` and use explicit
+package subpath exports. They may implement fork-specific behavior through the
+public API, but must not import internal transport/decoder modules. Do not export
+them from the core entry point or register them automatically. Document their
+verified endpoint scope, source revision, and operation semantics, and test their
+published imports and declarations as well as protocol behavior.
