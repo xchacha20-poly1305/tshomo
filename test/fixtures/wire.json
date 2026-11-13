@@ -1,0 +1,70 @@
+{
+  "groups": {
+    "proxies": [
+      {
+        "name": "自动选择",
+        "type": "Selector",
+        "all": ["DIRECT"],
+        "now": "DIRECT",
+        "history": []
+      }
+    ]
+  },
+  "groupDelay": { "DIRECT": 12, "香港 / 01": 34 },
+  "dnsUpper": {
+    "Status": 0,
+    "Question": [{ "Name": "example.invalid.", "Qtype": 1, "Qclass": 1 }],
+    "TC": false,
+    "Answer": [
+      { "name": "example.invalid.", "type": 1, "TTL": 60, "data": "192.0.2.1" }
+    ]
+  },
+  "dnsLower": {
+    "status": 0,
+    "question": [{ "Name": "example.invalid.", "Qtype": 1, "Qclass": 1 }],
+    "Answer": [
+      { "name": "example.invalid.", "type": 1, "ttl": 60, "data": "192.0.2.1" }
+    ]
+  },
+  "providerUpper": {
+    "name": "fixture",
+    "proxies": [],
+    "subscriptionInfo": {
+      "Upload": 100,
+      "Download": 200,
+      "Total": 1000,
+      "Expire": 1800000000
+    }
+  },
+  "providerLower": {
+    "name": "fixture",
+    "proxies": [],
+    "subscriptionInfo": {
+      "upload": 100,
+      "download": 200,
+      "total": 1000,
+      "expire": 1800000000
+    }
+  },
+  "ruleProviderNames": { "providers": ["fixture", "__proto__"] },
+  "connections": {
+    "downloadTotal": 200,
+    "uploadTotal": 100,
+    "connections": [
+      {
+        "id": "fixture-id",
+        "metadata": {
+          "network": "tcp",
+          "sourcePort": 1234,
+          "destinationPort": "443",
+          "future": { "kept": true }
+        },
+        "upload": 100,
+        "download": 200,
+        "start": "2026-11-12T00:00:00Z",
+        "chains": ["DIRECT"],
+        "rulePayload": "example.invalid"
+      }
+    ]
+  }
+}
