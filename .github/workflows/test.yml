@@ -1,9 +1,14 @@
 name: Test
+
 on:
   push:
+    branches: [dev-*]
   pull_request:
+  workflow_call:
+
 permissions:
   contents: read
+
 jobs:
   check:
     runs-on: ubuntu-latest
