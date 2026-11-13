@@ -13,7 +13,7 @@
     "sourceMap": true,
     "outDir": "dist",
     "rootDir": "src",
-    "types": [],
+    "types": ["node"],
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "verbatimModuleSyntax": true

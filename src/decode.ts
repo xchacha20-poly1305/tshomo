@@ -39,6 +39,16 @@ export function array<T>(guard: Guard<T>): Guard<T[]> {
   return (v): v is T[] => Array.isArray(v) && v.every(guard)
 }
 
+export function nullable<T>(guard: Guard<T>): Guard<T | null> {
+  return (v): v is T | null => v === null || guard(v)
+}
+
+/** Go nil slices represent empty collections on list endpoints. */
+export function list<T>(guard: Guard<T>, label: string): Decoder<T[]> {
+  const decode = decoder(array(guard), label)
+  return (v) => (v === null ? [] : decode(v))
+}
+
 export function optional(
   v: Record<string, unknown>,
   keys: string[],
@@ -115,7 +125,7 @@ export const config = decoder(
       ['port', 'socks-port', 'redir-port', 'tproxy-port', 'mixed-port'],
       ['allow-lan', 'ipv6'],
     ) &&
-    optional(v, ['tun'], tun) &&
+    optional(v, ['tun'], nullable(tun)) &&
     optional(v, ['modes', 'mode-list'], array(string)),
   'config',
 )
@@ -130,7 +140,7 @@ export const isProxy = (v: unknown): v is Proxy =>
   ) &&
   string(v.name) &&
   string(v.type) &&
-  optional(v, ['all'], array(string)) &&
+  optional(v, ['all'], nullable(array(string))) &&
   optional(v, ['extra'], object) &&
   optional(v, ['history'], array(history))
 export const proxy = decoder(isProxy, 'proxy')
@@ -200,7 +210,7 @@ const isRule = (v: unknown): v is Rule =>
   string(v.payload) &&
   string(v.proxy) &&
   optional(v, ['extra'], ruleExtra)
-export const rules = envelope('rules', decoder(array(isRule), 'rules'))
+export const rules = envelope('rules', list(isRule, 'rules'))
 const metadata = (v: unknown): v is ConnectionMetadata =>
   fields(v, [
     'network',
@@ -252,7 +262,7 @@ const rr = (v: unknown): v is DnsRecord =>
   optional(v, ['TTL', 'ttl'], number)
 export const dns = decoder(
   (v): v is DnsResponse =>
-    fields(v, ['server'], [], ['TC', 'RD', 'RA', 'AD', 'CD']) &&
+    fields(v, ['server', 'Server'], [], ['TC', 'RD', 'RA', 'AD', 'CD']) &&
     optional(v, ['Answer', 'Authority', 'Additional'], array(rr)) &&
     optional(v, ['Status', 'status'], number) &&
     optional(v, ['Question', 'question'], array(question)) &&

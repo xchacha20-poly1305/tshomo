@@ -28,7 +28,7 @@ export function configs(context: HttpContext) {
         isJson(value) ||
         (object(value) && Object.values(value).every(validate))
       try {
-        if (!validate(patch)) {
+        if (!validate(patch) || patch.tun === null) {
           throw new InputError()
         }
         config(patch)

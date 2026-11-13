@@ -7,6 +7,8 @@ import {
 import {
   createClashClient,
   type ConfigPatch,
+  type Config,
+  type DnsResponse,
   type Connection,
   type Proxy,
   type ProxyGroup,
@@ -115,3 +117,40 @@ function narrowRefindRule(rule: import('../../src/index.js').Rule) {
 
 void toggled
 void narrowRefindRule
+
+const singBoxConfig: Config = {
+  tun: null,
+}
+const invalidConfig: Config = {
+  tun: {
+    // @ts-expect-error Known TUN fields still require their declared types.
+    enable: 'yes',
+  },
+}
+const invalidTunValue: Config = {
+  // @ts-expect-error TUN is nullable, not an arbitrary primitive.
+  tun: false,
+}
+const emptyGroup: Proxy = {
+  name: 'empty',
+  type: 'LoadBalance',
+  all: null,
+}
+// @ts-expect-error Null group membership must be narrowed before array access.
+emptyGroup.all.join(',')
+const singBoxDns: DnsResponse = {
+  Status: 0,
+  Question: [],
+  Server: 'internal',
+}
+const invalidDns: DnsResponse = {
+  Status: 0,
+  Question: [],
+  // @ts-expect-error The capitalized DNS server field is typed too.
+  Server: 42,
+}
+void singBoxConfig
+void invalidConfig
+void invalidTunValue
+void singBoxDns
+void invalidDns

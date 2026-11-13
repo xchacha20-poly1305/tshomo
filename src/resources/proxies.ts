@@ -49,7 +49,7 @@ export function groups(context: HttpContext) {
       context.json(
         'groups.list',
         { method: 'GET', path: ['group'] },
-        d.envelope('proxies', d.decoder(d.array(d.isProxy), 'groups')),
+        d.envelope('proxies', d.list(d.isProxy, 'groups')),
         options,
       ),
     get: (name: string, options?: RequestOptions) =>

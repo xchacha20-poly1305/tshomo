@@ -77,9 +77,10 @@ automatically detect capabilities. Declare known unavailable methods with
 reject them locally. Unspecified capabilities are attempted normally.
 
 Smart, reF1nd, honk, and script APIs are outside the core API scope. An optional
-reF1nd example extension is available below. Compatibility tests use local servers
-and source-derived fixtures, not live controller runs;
-see [fixture provenance](test/fixtures/README.md).
+reF1nd example extension is available below. Compatibility tests combine local
+HTTP/WebSocket fixtures with real embedded sing-box and mihomo servers; see
+[fixture provenance](test/fixtures/README.md) and
+[kernel compatibility tests](#kernel-compatibility-tests).
 
 ## Caller-defined extensions
 
@@ -183,8 +184,10 @@ The server includes both DNS and routing rules in `GET /rules`.
 Protocol references: reF1nd/sing-box
 [stable rules implementation](https://github.com/reF1nd/sing-box/blob/732618a5989cd2566f072c374fe2f619200f33f9/experimental/clashapi/rules.go)
 and [testing rules implementation](https://github.com/reF1nd/sing-box/blob/17397d022647b73378705e1f91ff031dddaaec21/experimental/clashapi/rules.go).
-Tests reproduce these contracts using a local server; no live reF1nd controller
-has been tested. Other custom reF1nd endpoints are outside this example's scope.
+Tests reproduce these contracts using a local server. The kernel suite also
+checks UUID toggles against a real reF1nd-testing-next test server at revision
+`56e25a64031f8130995f87abdc05ff5ed24fdd55`. Other custom reF1nd endpoints are
+outside this example's scope.
 See [examples/refind.ts](examples/refind.ts) for a caller-side helper.
 
 ## Subscriptions and cleanup
@@ -256,6 +259,25 @@ factory. Configure cross-origin controllers to allow your application's origin,
 methods, and authorization/content-type headers. HTTPS applications should use
 an HTTPS controller endpoint, which produces WSS subscription URLs.
 
+## Kernel compatibility tests
+
+`bun run test:kernels` builds and starts two real Go test servers, one using
+sing-box replaced with reF1nd/sing-box `reF1nd-testing-next`, the other using mihomo `v1.19.34`.
+The dependencies and checksums are pinned in separate Go modules under
+[`test/servers/`](test/servers/README.md). This suite also runs in CI.
+
+The shared client tests cover configurations, empty and populated lists, proxy
+selection and delays, providers, rules, DNS, connection snapshots and closure,
+Bearer and WebSocket authentication, and traffic/memory/log subscriptions over
+WebSocket and HTTP JSON. Storage round trips run against mihomo; the pinned
+sing-box branch returns HTTP 404 for that optional API. Kernel-specific rule
+operations are tested explicitly; there is no automatic fork detection.
+
+The test servers have separate temporary data directories, dynamically assigned
+loopback ports, a local DNS responder and a local HTTPS delay target. They do not
+use a host daemon, enable TUN, or change the system proxy. Restart, configuration
+file reload, core/UI upgrades and geodata downloads are outside this suite.
+
 ## Development
 
 Use Bun 1.4.4 for dependency management and scripts.
@@ -265,6 +287,7 @@ bun run typecheck     # Check source, tests, and examples
 bun run lint          # ESLint and Prettier checks
 bun run test          # Vitest unit and local integration tests
 bun run test:package  # Build and verify the packed distribution
+bun run test:kernels  # Build real Go test servers and run both kernel contracts
 bun run format       # Apply formatting
 ```
 

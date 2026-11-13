@@ -34,7 +34,7 @@ export interface Config extends WireObject {
   'mode-list'?: string[]
   'log-level'?: string
   ipv6?: boolean
-  tun?: TunConfig
+  tun?: TunConfig | null
 }
 export type TunPatch = {
   [key: string]: JsonValue | undefined
@@ -81,7 +81,7 @@ export interface Proxy extends WireObject {
   xudp?: boolean
   now?: string
   fixed?: string
-  all?: string[]
+  all?: string[] | null
   extra?: Record<string, unknown>
   history?: DelayHistory[]
   testUrl?: string
@@ -236,6 +236,7 @@ export interface DnsRecordUpper extends WireObject {
 export type DnsRecord = DnsRecordLower | DnsRecordUpper
 export interface DnsBase extends WireObject {
   server?: string
+  Server?: string
   TC?: boolean
   RD?: boolean
   RA?: boolean

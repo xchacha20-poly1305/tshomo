@@ -115,6 +115,7 @@ it('maps A/B operations to wire method, prefix, encoding, query, body and domain
       run: (c) => c.groups.delay('g'),
       method: 'GET',
       path: 'group/g/delay',
+      query: '?timeout=5000',
       response: { DIRECT: 2 },
     },
     {
@@ -156,6 +157,7 @@ it('maps A/B operations to wire method, prefix, encoding, query, body and domain
       run: (c) => c.proxyProviders.delayProxy('p', 'DIRECT'),
       method: 'GET',
       path: 'providers/proxies/p/DIRECT/healthcheck',
+      query: '?timeout=5000',
       response: { delay: 3 },
     },
     {
