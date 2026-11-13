@@ -13,6 +13,25 @@ const functionStatement = {
   ].join(', '),
 }
 
+const typeDiscipline = [
+  {
+    selector: 'TSAnyKeyword',
+    message: 'Use unknown and validate external values.',
+  },
+  {
+    selector: 'TSAsExpression:not([typeAnnotation.typeName.name="const"])',
+    message: 'Narrow or validate values instead of asserting their types.',
+  },
+  {
+    selector: 'TSTypeAssertion',
+    message: 'Narrow or validate values instead of asserting their types.',
+  },
+  {
+    selector: 'TSNonNullExpression',
+    message: 'Check for null or undefined instead of asserting presence.',
+  },
+]
+
 // Babel parses TS syntax without depending on the compiler's JavaScript API.
 // TypeScript 7 performs the type/unused-symbol checks in bun run typecheck.
 export default [
@@ -57,20 +76,25 @@ export default [
         babelOptions: { plugins: ['@babel/plugin-syntax-typescript'] },
       },
     },
-    rules: { 'no-debugger': 'error', 'no-constant-condition': 'error' },
+    rules: {
+      'no-debugger': 'error',
+      'no-constant-condition': 'error',
+      'no-restricted-syntax': ['error', ...typeDiscipline],
+      'no-warning-comments': [
+        'error',
+        { terms: ['@ts-ignore', '@ts-nocheck'], location: 'anywhere' },
+      ],
+    },
   },
   {
     files: ['src/**/*.ts'],
     rules: {
       'no-restricted-syntax': [
         'error',
+        ...typeDiscipline,
         {
           selector: 'TSAsExpression',
           message: 'Validate unknown input instead of asserting its type.',
-        },
-        {
-          selector: 'TSAnyKeyword',
-          message: 'Use unknown and validate external values.',
         },
         {
           selector: 'Literal[regex]',

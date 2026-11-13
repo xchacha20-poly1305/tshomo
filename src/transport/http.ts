@@ -11,6 +11,7 @@ import {
   UnsupportedCapabilityError,
 } from '../errors.js'
 import { object, parseJson, type Decoder } from '../decode.js'
+import type { JsonInput } from '../types.js'
 import type {
   Capability,
   ClashClientOptions,
@@ -22,7 +23,7 @@ export interface RequestSpec {
   method: string
   path: readonly string[]
   query?: Query
-  json?: unknown
+  json?: JsonInput
   bytes?: Uint8Array
 }
 export interface Scope {

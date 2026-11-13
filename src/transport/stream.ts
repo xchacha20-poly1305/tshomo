@@ -77,7 +77,7 @@ export function watch<T>(
   let queue: T[] = []
   let pending:
     | {
-        resolve: (value: IteratorResult<T>) => void
+        resolve: (value: IteratorResult<T, undefined>) => void
         reject: (error: unknown) => void
       }
     | undefined
@@ -258,7 +258,7 @@ export function watch<T>(
       }
       claimed = true
       return {
-        next(): Promise<IteratorResult<T>> {
+        next(): Promise<IteratorResult<T, undefined>> {
           if (pending) {
             return Promise.reject(
               new InputError('Concurrent next() calls are unsupported'),
@@ -275,20 +275,22 @@ export function watch<T>(
               ? Promise.reject(failure)
               : Promise.resolve({ done: true, value: undefined })
           }
-          const next = new Promise<IteratorResult<T>>((resolve, reject) => {
-            pending = { resolve, reject }
-          })
+          const next = new Promise<IteratorResult<T, undefined>>(
+            (resolve, reject) => {
+              pending = { resolve, reject }
+            },
+          )
           if (!started) {
             started = true
             void run().catch(() => stop(new StreamError()))
           }
           return next
         },
-        return(): Promise<IteratorResult<T>> {
+        return(): Promise<IteratorResult<T, undefined>> {
           stop()
           return Promise.resolve({ done: true, value: undefined })
         },
-        throw(error?: unknown): Promise<IteratorResult<T>> {
+        throw(error?: unknown): Promise<IteratorResult<T, undefined>> {
           stop()
           return Promise.reject(error)
         },

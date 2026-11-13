@@ -37,6 +37,38 @@ file names such as `json-stream.ts`. Use `.js` extensions in relative ESM import
 Validate `unknown` inputs; source lint rules reject `any`, type assertions, and
 regex literals. Prefer structured parsing and maintainable shared abstractions.
 
+## Type Discipline
+
+- Keep `strict`, `noUncheckedIndexedAccess`, `exactOptionalPropertyTypes`,
+  `useUnknownInCatchVariables`, and unused-symbol checks enabled. Do not weaken
+  compiler or lint settings to make a change pass.
+- Do not use explicit or implicit `any`, type assertions, non-null assertions,
+  `@ts-ignore`, or `@ts-nocheck`. Tests may use `as const` to preserve literals;
+  source code must use inference, annotations, or `satisfies`. Use explained
+  `@ts-expect-error` only for intentional negative test cases.
+- Treat parsed JSON, socket payloads, errors, and unknown response fields as
+  `unknown` until validated. Keep JSON parsing behind `parseJson`; do not let
+  standard-library `any` escape into application code. Validate response data in
+  `src/decode.ts` and keep unknown wire fields intact for caller-side narrowing.
+- A type predicate is a runtime contract: check every required field and every
+  present optional field declared by the target type, including nested values.
+  Add decoder tests when adding or changing wire fields. Never use a predicate
+  merely to convince the compiler.
+- Preserve relationships between generic inputs and outputs. Decoder results
+  determine response types; extension factories determine extension types. Do not
+  replace those relationships with broad unions, `unknown`, or caller-selected
+  return types without a decoder. Keep internal JSON request bodies typed as
+  `JsonInput` and validate values at runtime where required.
+- Specify iterator yield, return, and next types explicitly: client streams use
+  `AsyncIterable<T, undefined, undefined>` and `IteratorResult<T, undefined>`.
+  Narrow `done` before reading a yielded value. Avoid generic defaults that
+  introduce `any` into the public API.
+- Keep event names paired with their payload types, including in test doubles;
+  use mapped types rather than casts through `never` or `unknown`.
+- Add positive and negative checks in `test/types/public.ts` for public type
+  changes. Verify published declarations with `bun run test:package`, as well as
+  running `bun run typecheck` and `bun run lint`.
+
 ## Testing Guidelines
 
 Name Vitest tests `*.test.ts` and browser tests `test/browser/*.spec.ts`.

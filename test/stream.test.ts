@@ -15,27 +15,29 @@ import {
 class FakeSocket implements ClashSocket {
   readyState = 0
   closed = 0
-  private listeners = new Map<string, Set<(event: never) => void>>()
+  private listeners: {
+    [K in keyof SocketEvents]: Set<(event: SocketEvents[K]) => void>
+  } = {
+    open: new Set(),
+    message: new Set(),
+    error: new Set(),
+    close: new Set(),
+  }
   addEventListener<K extends keyof SocketEvents>(
     type: K,
     listener: (event: SocketEvents[K]) => void,
   ) {
-    let set = this.listeners.get(type)
-    if (!set) {
-      set = new Set()
-      this.listeners.set(type, set)
-    }
-    set.add(listener as (event: never) => void)
+    this.listeners[type].add(listener)
   }
   removeEventListener<K extends keyof SocketEvents>(
     type: K,
     listener: (event: SocketEvents[K]) => void,
   ) {
-    this.listeners.get(type)?.delete(listener as (event: never) => void)
+    this.listeners[type].delete(listener)
   }
   emit<K extends keyof SocketEvents>(type: K, value: SocketEvents[K]) {
-    for (const listener of [...(this.listeners.get(type) ?? [])]) {
-      listener(value as never)
+    for (const listener of [...this.listeners[type]]) {
+      listener(value)
     }
   }
   open() {
@@ -50,7 +52,7 @@ class FakeSocket implements ClashSocket {
     this.closed++
   }
   count() {
-    return [...this.listeners.values()].reduce(
+    return Object.values(this.listeners).reduce(
       (count, set) => count + set.size,
       0,
     )
@@ -127,8 +129,14 @@ it('keeps latest snapshots, preserves log order and fails on log overflow', asyn
   await logFirst
   socket().text({ type: 'info', payload: 'second' })
   socket().text({ type: 'info', payload: 'third' })
-  expect((await logIterator.next()).value.payload).toBe('second')
-  expect((await logIterator.next()).value.payload).toBe('third')
+  expect(await logIterator.next()).toEqual({
+    done: false,
+    value: { type: 'info', payload: 'second' },
+  })
+  expect(await logIterator.next()).toEqual({
+    done: false,
+    value: { type: 'info', payload: 'third' },
+  })
   for (let i = 0; i < 257; i++) {
     socket().text({ type: 'info', payload: String(i) })
   }

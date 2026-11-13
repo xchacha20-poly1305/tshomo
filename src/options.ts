@@ -86,7 +86,7 @@ export interface ClashClientOptions {
 }
 export type StreamState =
   'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed' | 'failed'
-export interface ClashStream<T> extends AsyncIterable<T> {
+export interface ClashStream<T> extends AsyncIterable<T, undefined, undefined> {
   readonly state: StreamState
   close(): void
 }

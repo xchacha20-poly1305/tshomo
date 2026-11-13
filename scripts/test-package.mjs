@@ -69,6 +69,22 @@ try {
     }))
     const count: Promise<number> = custom.count()
     void count
+    async function streamTypes() {
+      const result = await client.metrics.watchTraffic()[Symbol.asyncIterator]().next()
+      // @ts-expect-error Iterator return values must not default to any.
+      const wrong: string = result.value
+      // @ts-expect-error Check done before accessing a yielded value.
+      result.value.up
+      if (!result.done) {
+        const up: number = result.value.up
+        void up
+      } else {
+        const completed: undefined = result.value
+        void completed
+      }
+      void wrong
+    }
+    void streamTypes
     const refindClient: RefindExtension = client.extend(refind)
     const toggled: Promise<void> = refindClient.rules.toggleByUuid('uuid')
     void toggled

@@ -55,6 +55,31 @@ async function declarations(proxy: Proxy, connection: Connection) {
 
 void declarations
 
+async function streamTypes() {
+  const result = await client.metrics
+    .watchTraffic()
+    [Symbol.asyncIterator]()
+    .next()
+  // @ts-expect-error A completed stream has no value; check done first.
+  const unchecked: number = result.value.up
+  // @ts-expect-error Iterator values must not leak any through the return type.
+  const wrong: string = result.value
+  if (!result.done) {
+    const up: number = result.value.up
+    // @ts-expect-error Yielded traffic fields remain numeric.
+    const badUp: string = result.value.up
+    void up
+    void badUp
+  } else {
+    const completed: undefined = result.value
+    void completed
+  }
+  void unchecked
+  void wrong
+}
+
+void streamTypes
+
 const extension = client.extend((transport) => {
   // @ts-expect-error The extension facade does not expose credentials.
   void transport.secret
