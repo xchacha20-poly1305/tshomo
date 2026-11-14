@@ -14,7 +14,9 @@ import {
 
 class FakeSocket implements ClashSocket {
   readyState = 0
+
   closed = 0
+
   private listeners: {
     [K in keyof SocketEvents]: Set<(event: SocketEvents[K]) => void>
   } = {
@@ -23,34 +25,41 @@ class FakeSocket implements ClashSocket {
     error: new Set(),
     close: new Set(),
   }
+
   addEventListener<K extends keyof SocketEvents>(
     type: K,
     listener: (event: SocketEvents[K]) => void,
   ) {
     this.listeners[type].add(listener)
   }
+
   removeEventListener<K extends keyof SocketEvents>(
     type: K,
     listener: (event: SocketEvents[K]) => void,
   ) {
     this.listeners[type].delete(listener)
   }
+
   emit<K extends keyof SocketEvents>(type: K, value: SocketEvents[K]) {
     for (const listener of [...this.listeners[type]]) {
       listener(value)
     }
   }
+
   open() {
     this.readyState = 1
     this.emit('open', {})
   }
+
   text(value: unknown) {
     this.emit('message', { data: JSON.stringify(value) })
   }
+
   close() {
     this.readyState = 3
     this.closed++
   }
+
   count() {
     return Object.values(this.listeners).reduce(
       (count, set) => count + set.size,

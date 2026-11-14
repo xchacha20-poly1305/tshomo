@@ -26,19 +26,28 @@ export interface RequestSpec {
   json?: JsonInput
   bytes?: Uint8Array
 }
+
 export interface Scope {
   signal: AbortSignal
   error(): ClashError | undefined
   finish(): void
 }
+
 export class HttpContext {
   readonly base: URL
+
   readonly secret: string | undefined
+
   readonly timeoutMs: number
+
   private readonly fetcher: typeof globalThis.fetch
+
   private readonly capabilities: ClashClientOptions['capabilities']
+
   private disposed = false
+
   private readonly cleanups = new Set<() => void>()
+
   constructor(options: ClashClientOptions) {
     this.base = baseUrl(options.baseUrl)
     if (options.secret !== undefined && typeof options.secret !== 'string') {
@@ -62,6 +71,7 @@ export class HttpContext {
     }
     this.capabilities = { ...options.capabilities }
   }
+
   check(capability?: Capability): void {
     if (this.disposed) {
       throw new ClientDisposedError()
@@ -73,6 +83,7 @@ export class HttpContext {
       throw new UnsupportedCapabilityError(capability)
     }
   }
+
   own(cleanup: () => void): () => void {
     if (this.disposed) {
       throw new ClientDisposedError()
@@ -82,6 +93,7 @@ export class HttpContext {
       this.cleanups.delete(cleanup)
     }
   }
+
   dispose(): void {
     if (this.disposed) {
       return
@@ -92,6 +104,7 @@ export class HttpContext {
     }
     this.cleanups.clear()
   }
+
   redact(text: string): string {
     // Opaque server strings can contain arbitrarily transformed credentials.
     // With credentials present expose no server-controlled text at all.
@@ -104,6 +117,7 @@ export class HttpContext {
     }
     return text.slice(0, 512).split('\n').join(' ').split('\r').join(' ')
   }
+
   safeCause(value: unknown): unknown {
     if (value instanceof Error) {
       return new Error(this.redact(value.message))
@@ -120,13 +134,16 @@ export class HttpContext {
     }
     return undefined
   }
+
   cancellation(reason: unknown): AbortError {
     return new AbortError(this.safeCause(reason))
   }
+
   safeResult(value: Record<string, unknown>): Record<string, unknown> {
     // Only the known business discriminator is safe to expose.
     return { status: value.status === 'ok' ? 'ok' : 'unsuccessful' }
   }
+
   scope(signal: AbortSignal | undefined, timeoutMs: number): Scope {
     duration(timeoutMs, 'timeoutMs')
     const controller = new AbortController()
@@ -162,6 +179,7 @@ export class HttpContext {
       },
     }
   }
+
   async fetch(spec: RequestSpec, signal: AbortSignal): Promise<Response> {
     if (signal.aborted) {
       throw new AbortError()
@@ -217,6 +235,7 @@ export class HttpContext {
     }
     return response
   }
+
   async readBytes(
     response: Response,
     signal: AbortSignal,
@@ -266,6 +285,7 @@ export class HttpContext {
       reader.releaseLock()
     }
   }
+
   async request<T>(
     capability: Capability | undefined,
     spec: RequestSpec,
@@ -305,6 +325,7 @@ export class HttpContext {
       scope.finish()
     }
   }
+
   json<T>(
     capability: Capability | undefined,
     spec: RequestSpec,
@@ -330,6 +351,7 @@ export class HttpContext {
       options,
     )
   }
+
   void(
     capability: Capability | undefined,
     spec: RequestSpec,
@@ -344,6 +366,7 @@ export class HttpContext {
       options,
     )
   }
+
   operation<T extends Record<string, unknown> & { status: string }>(
     capability: Capability | undefined,
     spec: RequestSpec,

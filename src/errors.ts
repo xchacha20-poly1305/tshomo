@@ -23,11 +23,13 @@ export class ClashError extends Error {
     this.name = new.target.name
   }
 }
+
 export class InputError extends ClashError {
   constructor(message = 'Invalid input') {
     super('input', message)
   }
 }
+
 export class HttpError extends ClashError {
   constructor(
     readonly method: string,
@@ -41,6 +43,7 @@ export class HttpError extends ClashError {
     )
   }
 }
+
 export class NetworkError extends ClashError {
   constructor(cause?: unknown) {
     super(
@@ -50,11 +53,13 @@ export class NetworkError extends ClashError {
     )
   }
 }
+
 export class TimeoutError extends ClashError {
   constructor() {
     super('timeout', 'Operation timed out')
   }
 }
+
 export class AbortError extends ClashError {
   // Only transport-sanitized reasons may be supplied here.
   constructor(cause?: unknown) {
@@ -65,26 +70,31 @@ export class AbortError extends ClashError {
     )
   }
 }
+
 export class DecodeError extends ClashError {
   constructor(message = 'Invalid response data') {
     super('decode', message)
   }
 }
+
 export class OperationError extends ClashError {
   constructor(readonly result: Readonly<Record<string, unknown>>) {
     super('operation', 'Server reported an unsuccessful operation')
   }
 }
+
 export class UnsupportedTransportError extends ClashError {
   constructor() {
     super('unsupported-transport', 'Requested transport is unavailable')
   }
 }
+
 export class UnsupportedCapabilityError extends ClashError {
   constructor(readonly capability: string) {
     super('unsupported-capability', `Unsupported capability: ${capability}`)
   }
 }
+
 export class StreamError extends ClashError {
   constructor(
     message = 'Stream connection failed',
@@ -93,11 +103,13 @@ export class StreamError extends ClashError {
     super('stream', message)
   }
 }
+
 export class BufferOverflowError extends ClashError {
   constructor() {
     super('buffer-overflow', 'Log buffer capacity exceeded')
   }
 }
+
 export class ClientDisposedError extends ClashError {
   constructor() {
     super('client-disposed', 'Client has been disposed')

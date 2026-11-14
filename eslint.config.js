@@ -2,11 +2,15 @@ import js from '@eslint/js'
 import parser from '@babel/eslint-parser'
 import stylistic from '@stylistic/eslint-plugin'
 
-const functionStatement = {
+const separatedDeclaration = {
   selector: [
     'FunctionDeclaration',
-    'ExportNamedDeclaration[declaration.type="FunctionDeclaration"]',
-    'ExportDefaultDeclaration[declaration.type="FunctionDeclaration"]',
+    'ClassDeclaration',
+    'TSInterfaceDeclaration',
+    'ExportNamedDeclaration:matches([declaration.type="FunctionDeclaration"], ' +
+      '[declaration.type="ClassDeclaration"], [declaration.type="TSInterfaceDeclaration"])',
+    'ExportDefaultDeclaration:matches([declaration.type="FunctionDeclaration"], ' +
+      '[declaration.type="ClassDeclaration"], [declaration.type="TSInterfaceDeclaration"])',
     'VariableDeclaration:has(> VariableDeclarator > :matches(ArrowFunctionExpression, FunctionExpression))',
     'ExportNamedDeclaration:has(> VariableDeclaration > VariableDeclarator > ' +
       ':matches(ArrowFunctionExpression, FunctionExpression))',
@@ -47,6 +51,11 @@ export default [
     files: ['**/*.{js,mjs,ts}'],
     plugins: { '@stylistic': stylistic },
     rules: {
+      '@stylistic/lines-between-class-members': [
+        'error',
+        'always',
+        { exceptAfterOverload: false },
+      ],
       '@stylistic/max-len': ['error', { code: 120 }],
       '@stylistic/nonblock-statement-body-position': ['error', 'beside'],
       '@stylistic/max-statements-per-line': ['error', { max: 1 }],
@@ -54,8 +63,8 @@ export default [
         'error',
         { blankLine: 'always', prev: 'import', next: '*' },
         { blankLine: 'any', prev: 'import', next: 'import' },
-        { blankLine: 'always', prev: functionStatement, next: '*' },
-        { blankLine: 'always', prev: '*', next: functionStatement },
+        { blankLine: 'always', prev: separatedDeclaration, next: '*' },
+        { blankLine: 'always', prev: '*', next: separatedDeclaration },
       ],
       curly: ['error', 'all'],
     },

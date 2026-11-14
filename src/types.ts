@@ -1,19 +1,24 @@
 export type JsonValue =
   null | boolean | number | string | JsonValue[] | { [key: string]: JsonValue }
+
 export interface WireObject {
   [key: string]: unknown
 }
+
 export interface Hello extends WireObject {
   hello: string
 }
+
 export interface Version extends WireObject {
   version: string
   premium?: boolean
   meta?: boolean
 }
+
 export interface MaintenanceResult extends WireObject {
   status: string
 }
+
 export interface TunConfig extends WireObject {
   enable?: boolean
   stack?: string
@@ -21,6 +26,7 @@ export interface TunConfig extends WireObject {
   'auto-route'?: boolean
   'auto-detect-interface'?: boolean
 }
+
 export interface Config extends WireObject {
   port?: number
   'socks-port'?: number
@@ -36,6 +42,7 @@ export interface Config extends WireObject {
   ipv6?: boolean
   tun?: TunConfig | null
 }
+
 export type TunPatch = {
   [key: string]: JsonValue | undefined
   enable?: boolean
@@ -51,6 +58,7 @@ export type JsonInput =
   | string
   | JsonValue[]
   | { [key: string]: JsonInput | undefined }
+
 export interface ConfigPatch {
   [key: string]: JsonInput | undefined
   port?: number
@@ -67,13 +75,16 @@ export interface ConfigPatch {
   ipv6?: boolean
   tun?: TunPatch
 }
+
 export interface Delay extends WireObject {
   delay: number
 }
+
 export interface DelayHistory extends WireObject {
   time: string
   delay: number
 }
+
 export interface Proxy extends WireObject {
   name: string
   type: string
@@ -89,6 +100,7 @@ export interface Proxy extends WireObject {
   hidden?: boolean
   selectable?: boolean
 }
+
 export interface ProxyGroup extends Proxy {
   all: string[]
 }
@@ -103,12 +115,14 @@ export interface SubscriptionLower extends WireObject {
   total?: number
   expire?: number
 }
+
 export interface SubscriptionUpper extends WireObject {
   Upload?: number
   Download?: number
   Total?: number
   Expire?: number
 }
+
 export type SubscriptionInfo = SubscriptionLower | SubscriptionUpper
 
 /** Bytes and Unix seconds, unchanged from the wire. Uppercase fields take precedence. */
@@ -149,6 +163,7 @@ export interface ProxyProvider extends WireObject {
   expectedStatus?: string
   subscriptionInfo?: SubscriptionInfo
 }
+
 export interface RuleProvider extends WireObject {
   name: string
   type?: string
@@ -159,6 +174,7 @@ export interface RuleProvider extends WireObject {
   ruleCount?: number
   payload?: string[]
 }
+
 export interface Rule extends WireObject {
   type: string
   payload: string
@@ -169,6 +185,7 @@ export interface Rule extends WireObject {
   disabled?: boolean
   extra?: RuleExtra
 }
+
 export interface RuleExtra extends WireObject {
   disabled?: boolean
   hitCount?: number
@@ -176,6 +193,7 @@ export interface RuleExtra extends WireObject {
   hitAt?: string
   missAt?: string
 }
+
 export interface ConnectionMetadata extends WireObject {
   network?: string
   type?: string
@@ -188,6 +206,7 @@ export interface ConnectionMetadata extends WireObject {
   dnsMode?: string
   processPath?: string
 }
+
 export interface Connection extends WireObject {
   id: string
   metadata: ConnectionMetadata
@@ -198,42 +217,51 @@ export interface Connection extends WireObject {
   rule?: string
   rulePayload?: string
 }
+
 export interface ConnectionsSnapshot extends WireObject {
   downloadTotal: number
   uploadTotal: number
   connections: Connection[] | null
   memory?: number
 }
+
 export interface Traffic extends WireObject {
   up: number
   down: number
 }
+
 export interface Memory extends WireObject {
   inuse: number
   oslimit?: number
 }
+
 export interface Log extends WireObject {
   type: string
   payload: string
 }
+
 export interface DnsQuestion extends WireObject {
   Name: string
   Qtype: number
   Qclass: number
 }
+
 export interface DnsRecordLower extends WireObject {
   name: string
   type: number
   ttl: number
   data: string
 }
+
 export interface DnsRecordUpper extends WireObject {
   name: string
   type: number
   TTL: number
   data: string
 }
+
 export type DnsRecord = DnsRecordLower | DnsRecordUpper
+
 export interface DnsBase extends WireObject {
   server?: string
   Server?: string
@@ -246,6 +274,7 @@ export interface DnsBase extends WireObject {
   Authority?: DnsRecord[]
   Additional?: DnsRecord[]
 }
+
 export type DnsResponse = DnsBase &
   (
     | { Status: number; Question: DnsQuestion[] }

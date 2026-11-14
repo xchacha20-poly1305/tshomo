@@ -31,7 +31,8 @@ Use Bun 1.4.4 and Node.js 22 or newer. Commit dependency changes with `bun.lock`
 Use two-space indentation, single quotes, no semicolons, and trailing commas.
 Keep code within 120 columns, use braces for control flow, and write one statement
 per line. Separate the import block from the following code with a blank line, and
-leave blank lines around function declarations and function-valued variables.
+leave blank lines around class, interface, and function declarations and function-valued variables,
+and between class members.
 Use camelCase for values, PascalCase for types, and descriptive lowercase
 file names such as `json-stream.ts`. Use `.js` extensions in relative ESM imports.
 Validate `unknown` inputs; source lint rules reject `any`, type assertions, and

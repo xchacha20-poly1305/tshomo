@@ -11,6 +11,7 @@ export interface Feed {
   open(): void
   message(text: string): void
 }
+
 export interface ConnectionOptions {
   signal: AbortSignal
   connectTimeoutMs: number

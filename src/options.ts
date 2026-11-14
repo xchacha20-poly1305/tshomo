@@ -2,11 +2,13 @@ export interface RequestOptions {
   signal?: AbortSignal
   timeoutMs?: number
 }
+
 export interface DelayOptions {
   url?: string
   timeoutMs?: number
   expectedStatus?: string
 }
+
 export type CapabilityState = 'supported' | 'unsupported' | 'unknown'
 export type Capability =
   | 'system.hello'
@@ -56,12 +58,14 @@ export type Capability =
   | 'storage.delete'
   | 'storage.getJson'
   | 'storage.putJson'
+
 export interface SocketEvents {
   open: unknown
   message: { readonly data: unknown }
   error: unknown
   close: { readonly code: number }
 }
+
 export interface ClashSocket {
   readonly readyState: number
   addEventListener<K extends keyof SocketEvents>(
@@ -74,8 +78,10 @@ export interface ClashSocket {
   ): void
   close(): void
 }
+
 /** The URL contains the token. Factories must not log it. */
 export type WebSocketFactory = (url: string) => ClashSocket
+
 export interface ClashClientOptions {
   baseUrl: string
   secret?: string
@@ -84,12 +90,15 @@ export interface ClashClientOptions {
   requestTimeoutMs?: number
   capabilities?: Partial<Record<Capability, CapabilityState>>
 }
+
 export type StreamState =
   'idle' | 'connecting' | 'open' | 'reconnecting' | 'closed' | 'failed'
+
 export interface ClashStream<T> extends AsyncIterable<T, undefined, undefined> {
   readonly state: StreamState
   close(): void
 }
+
 export interface StreamOptions {
   signal?: AbortSignal
   transport?: 'websocket' | 'http-json'
@@ -101,6 +110,7 @@ export interface StreamOptions {
     | { maxAttempts: number; initialDelayMs?: number; maxDelayMs?: number }
   onStateChange?: (state: StreamState) => void
 }
+
 export interface ConnectionsWatchOptions extends Omit<
   StreamOptions,
   'transport'
@@ -108,17 +118,22 @@ export interface ConnectionsWatchOptions extends Omit<
   transport?: 'websocket'
   intervalMs?: number
 }
+
 export interface LogsWatchOptions extends StreamOptions {
   level?: string
 }
+
 export interface SampleOptions extends StreamOptions {
   timeoutMs?: number
 }
+
 export type ConfigLoadInput =
   { path: string; payload?: never } | { payload: string; path?: never }
+
 export interface ConfigLoadOptions {
   force?: boolean
 }
+
 export interface UpgradeOptions {
   channel?: string
   force?: boolean

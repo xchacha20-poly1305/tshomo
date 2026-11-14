@@ -13,6 +13,7 @@ it('maps A/B operations to wire method, prefix, encoding, query, body and domain
     result?: unknown
     raw?: boolean
   }
+
   const proxy = { name: 'DIRECT', type: 'Direct', unknown: { kept: true } }
   const snapshot = { downloadTotal: 2, uploadTotal: 1, connections: null }
   const cases: Case[] = [
