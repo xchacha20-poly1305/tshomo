@@ -58,6 +58,23 @@ test.beforeAll(async () => {
       request.url === '/controller/rules/browser-uuid'
     ) {
       response.writeHead(204).end()
+    } else if (
+      request.method === 'GET' &&
+      request.url === '/controller/group/weights'
+    ) {
+      response.writeHead(200, { 'Content-Type': 'application/json' }).end(
+        JSON.stringify({
+          weights: {
+            Smart: [{ Name: 'NodeA', Rank: 'MostUsed', Weight: 100 }],
+            Empty: null,
+          },
+        }),
+      )
+    } else if (
+      request.method === 'DELETE' &&
+      request.url === '/controller/connections/smart/browser-conn'
+    ) {
+      response.writeHead(204).end()
     } else {
       response
         .writeHead(200, { 'Content-Type': 'application/json' })
@@ -212,4 +229,52 @@ test('published reF1nd module performs an authenticated cross-origin toggle', as
   expect(result).toBe(true)
   expect(preflight).toBeGreaterThan(0)
   expect(authorizations).toEqual(['Bearer browser-secret'])
+})
+
+test('published Smart module performs authenticated cross-origin weight and block calls', async ({
+  page,
+}) => {
+  const result = await page.evaluate(async (baseUrl) => {
+    const moduleUrl = '/dist/index.js'
+    const extensionUrl = '/dist/extensions/smart.js'
+    const { createClashClient } = await import(moduleUrl)
+    const { smart, isSmartGroup, isSmartConnection } = await import(
+      extensionUrl
+    )
+    const client = createClashClient({ baseUrl, secret: 'browser-secret' })
+    try {
+      const extension = client.extend(smart)
+      const weights = await extension.groups.listWeights()
+      await extension.connections.block('browser-conn')
+      return {
+        weights,
+        group: isSmartGroup({ name: 'Smart', type: 'Smart', all: ['NodeA'] }),
+        connection: isSmartConnection({
+          id: 'browser-conn',
+          upload: 0,
+          download: 0,
+          start: 0,
+          chains: ['NodeA'],
+          metadata: { smartBlock: 'normal' },
+        }),
+      }
+    } finally {
+      client.dispose()
+    }
+  }, apiServer.baseUrl)
+  expect(result).toEqual({
+    weights: {
+      weights: {
+        Smart: [{ Name: 'NodeA', Rank: 'MostUsed', Weight: 100 }],
+        Empty: [],
+      },
+    },
+    group: true,
+    connection: true,
+  })
+  expect(preflight).toBeGreaterThan(0)
+  expect(authorizations).toEqual([
+    'Bearer browser-secret',
+    'Bearer browser-secret',
+  ])
 })

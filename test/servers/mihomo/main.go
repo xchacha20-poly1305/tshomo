@@ -9,6 +9,7 @@ import (
 	"syscall"
 
 	C "github.com/metacubex/mihomo/constant"
+	"github.com/metacubex/mihomo/component/smart"
 	"github.com/metacubex/mihomo/hub"
 	"github.com/metacubex/mihomo/hub/executor"
 	"github.com/metacubex/mihomo/log"
@@ -35,6 +36,8 @@ func run() error {
 	}
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
+	// Prevent background Smart exit probes from contacting external trace hosts.
+	smart.ExitTraceURLs = []string{"://disabled"}
 	if err = hub.Parse(content); err != nil {
 		return fmt.Errorf("start mihomo: %w", err)
 	}

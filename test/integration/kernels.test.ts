@@ -16,6 +16,11 @@ import {
   type ClashStream,
 } from '../../src/index.js'
 import { refind } from '../../src/extensions/refind.js'
+import {
+  isSmartConnection,
+  isSmartGroup,
+  smart,
+} from '../../src/extensions/smart.js'
 
 const kernels = ['sing-box', 'mihomo'] as const
 
@@ -90,7 +95,11 @@ it.skipIf(process.env.TSHOMO_TEST_KERNELS !== '1').each(kernels)(
     )
     const target = createHttpsServer(
       { key: await readFile(keyPath), cert: await readFile(certPath) },
-      (_request, response) => {
+      (request, response) => {
+        if (request.url === '/Model.bin') {
+          response.writeHead(200).end('test-model')
+          return
+        }
         // URL tests report integer milliseconds and reject a zero delay.
         setTimeout(() => response.writeHead(204).end(), 20)
       },
@@ -105,6 +114,7 @@ it.skipIf(process.env.TSHOMO_TEST_KERNELS !== '1').each(kernels)(
     const targetUrl = `https://127.0.0.1:${targetPort}/generate_204`
     const providerName = 'inline / % ? #'
     const groupName = 'selector / % ? #'
+    const smartGroupName = 'smart / % ? #'
 
     const dnsServer = createSocket('udp4')
     dnsServer.on('message', (query, peer) => {
@@ -226,8 +236,22 @@ it.skipIf(process.env.TSHOMO_TEST_KERNELS !== '1').each(kernels)(
         mode: 'rule',
         'find-process-mode': 'off',
         'geo-auto-update': false,
+        'lgbm-auto-update': false,
+        'lgbm-url': `https://127.0.0.1:${targetPort}/Model.bin`,
+        hosts: { 'smart.test': '127.0.0.1' },
         'proxy-groups': populated
-          ? [{ name: groupName, type: 'select', proxies: ['direct', 'block'] }]
+          ? [
+              { name: groupName, type: 'select', proxies: ['direct', 'block'] },
+              {
+                name: smartGroupName,
+                type: 'smart',
+                proxies: ['direct'],
+                url: targetUrl,
+                uselightgbm: false,
+                collectdata: false,
+                'prefer-asn': false,
+              },
+            ]
           : [],
         proxies: [
           { name: 'direct', type: 'direct' },
@@ -260,14 +284,22 @@ it.skipIf(process.env.TSHOMO_TEST_KERNELS !== '1').each(kernels)(
               },
             }
           : {},
-        rules: populated ? ['RULE-SET,inline-rules,direct'] : [],
+        rules: populated
+          ? [
+              'RULE-SET,inline-rules,direct',
+              `DOMAIN,smart.test,${smartGroupName}`,
+            ]
+          : [],
         dns: {
           enable: true,
-          'use-hosts': false,
+          'use-hosts': true,
           'use-system-hosts': false,
           'default-nameserver': ['127.0.0.1'],
           nameserver: [`udp://127.0.0.1:${dnsPort}`],
         },
+      }
+      if (kernel === 'mihomo') {
+        await writeFile(join(dataDir, 'Model.bin'), 'test-model')
       }
       const config =
         kernel === 'sing-box'
@@ -338,6 +370,14 @@ it.skipIf(process.env.TSHOMO_TEST_KERNELS !== '1').each(kernels)(
       expect(
         (await empty.client.connections.snapshot()).connections ?? [],
       ).toEqual([])
+      if (kernel === 'mihomo') {
+        const emptySmart = empty.client.extend(smart)
+        expect(await emptySmart.groups.listWeights()).toEqual({
+          weights: {},
+          message: 'No Smart groups or no weight data available',
+        })
+        await emptySmart.cache.flushSmart()
+      }
       const unauthenticated = createClashClient({
         baseUrl: `http://127.0.0.1:${empty.port}`,
         secret: 'wrong',
@@ -350,7 +390,7 @@ it.skipIf(process.env.TSHOMO_TEST_KERNELS !== '1').each(kernels)(
         unauthenticated.dispose()
       }
 
-      const { client, proxyPort } = await start(true)
+      const { client, port, proxyPort } = await start(true)
       const proxies = await client.proxies.list()
       expect(proxies[groupName]?.all).toEqual(['direct', 'block'])
       expect(await client.groups.get(groupName)).toEqual(proxies[groupName])
@@ -362,6 +402,42 @@ it.skipIf(process.env.TSHOMO_TEST_KERNELS !== '1').each(kernels)(
       await client.proxies.select(groupName, 'direct')
       await client.configs.patch({ mode: 'rule' })
       expect((await client.configs.get()).mode).toBe('rule')
+
+      if (kernel === 'mihomo') {
+        const smartExtension = client.extend(smart)
+        const smartProxy = proxies[smartGroupName]
+        expect(smartProxy && isSmartGroup(smartProxy)).toBe(true)
+        expect(smartProxy?.type).toBe('Smart')
+        expect(smartProxy?.now).toBe('Smart - Select')
+
+        await client.proxies.select(smartGroupName, 'direct')
+        const selectedSmart = await client.proxies.get(smartGroupName)
+        expect(selectedSmart.fixed).toBe('direct')
+        expect(selectedSmart.now).toBe('direct')
+        await client.proxies.clearFixed(smartGroupName)
+        expect((await client.proxies.get(smartGroupName)).fixed).toBe('')
+
+        expect(
+          (await client.groups.delay(smartGroupName, { url: targetUrl }))
+            .direct,
+        ).toBeGreaterThan(0)
+
+        const weightsSnapshot = await smartExtension.groups.listWeights()
+        expect(weightsSnapshot.weights[smartGroupName]).toEqual([])
+        expect(weightsSnapshot.errors).toEqual({})
+        expect(await smartExtension.groups.getWeights(smartGroupName)).toEqual(
+          [],
+        )
+        await expect(
+          smartExtension.groups.getWeights(groupName),
+        ).rejects.toMatchObject({ status: 400 })
+
+        await smartExtension.cache.flushSmart()
+        await smartExtension.cache.flushSmartConfig(`config-${port}`)
+        expect(await smartExtension.system.upgradeLgbm()).toEqual({
+          status: 'ok',
+        })
+      }
 
       // Omitting timeoutMs used to produce HTTP 400 on all three calls.
       expect(
@@ -512,9 +588,43 @@ it.skipIf(process.env.TSHOMO_TEST_KERNELS !== '1').each(kernels)(
         if (!connection) {
           throw new Error('Missing active connection')
         }
+        expect(isSmartConnection(connection)).toBe(false)
         await client.connections.close(connection.id)
       } finally {
         socket.destroy()
+      }
+      if (kernel === 'mihomo') {
+        const smartExtension = client.extend(smart)
+        const smartSocket = createConnection(proxyPort, '127.0.0.1')
+        try {
+          await once(smartSocket, 'connect')
+          smartSocket.write(
+            `CONNECT smart.test:${targetPort} HTTP/1.1\r\nHost: smart.test:${targetPort}\r\n\r\n`,
+          )
+          const [header] = await once(smartSocket, 'data')
+          expect(String(header)).toContain('200')
+          const smartSnapshot = await client.connections.snapshot()
+          const smartConnection = (smartSnapshot.connections ?? []).find(
+            isSmartConnection,
+          )
+          if (!smartConnection) {
+            throw new Error('Missing active Smart connection')
+          }
+          expect(smartConnection.chains).toContain(smartGroupName)
+          expect(smartConnection.metadata.smartBlock).toBe('normal')
+          expect(smartConnection.metadata.smartTarget).toBe(
+            'Domain [smart.test]',
+          )
+          await smartExtension.connections.block(smartConnection.id)
+          const afterBlock = await client.connections.snapshot()
+          expect(
+            afterBlock.connections?.some(
+              (item) => item.id === smartConnection.id,
+            ) ?? false,
+          ).toBe(false)
+        } finally {
+          smartSocket.destroy()
+        }
       }
       await client.connections.closeAll()
     } finally {

@@ -76,8 +76,8 @@ automatically detect capabilities. Declare known unavailable methods with
 `capabilities: { 'system.restart': 'unsupported' }` when creating a client to
 reject them locally. Unspecified capabilities are attempted normally.
 
-Smart, reF1nd, honk, and script APIs are outside the core API scope. An optional
-reF1nd example extension is available below. Compatibility tests combine local
+Smart, reF1nd, honk, and script APIs are outside the core API scope. Optional
+reF1nd and Smart example extensions are available below. Compatibility tests combine local
 HTTP/WebSocket fixtures with real embedded sing-box and mihomo servers; see
 [fixture provenance](test/fixtures/README.md) and
 [kernel compatibility tests](#kernel-compatibility-tests).
@@ -190,6 +190,69 @@ checks UUID toggles against a real reF1nd-testing-next test server at revision
 outside this example's scope.
 See [examples/refind.ts](examples/refind.ts) for a caller-side helper.
 
+### Published example: Smart
+
+`tshomo/extensions/smart` is an opt-in submodule shipped in the same package for
+`vernesong/mihomo` Smart endpoints. It uses only tshomo's public API and is not
+imported or registered by the core entry point.
+
+```ts
+import { createClashClient } from 'tshomo'
+import { isSmartConnection, isSmartGroup, smart } from 'tshomo/extensions/smart'
+
+const client = createClashClient({ baseUrl: 'http://127.0.0.1:9090' })
+const extension = client.extend(smart)
+try {
+  const proxies = await client.proxies.list()
+  const smartGroups = Object.values(proxies).filter(isSmartGroup)
+  const snapshot = await extension.groups.listWeights()
+  console.log(smartGroups.length, snapshot.weights)
+
+  const active = await client.connections.snapshot()
+  const blockable = (active.connections ?? []).filter(
+    (conn) => isSmartConnection(conn) && conn.metadata.smartBlock === 'normal',
+  )
+  if (blockable[0]) {
+    await extension.connections.block(blockable[0].id)
+  }
+} finally {
+  client.dispose()
+}
+```
+
+Core `client.proxies.select`, `client.proxies.clearFixed`, and
+`client.groups.delay` already work on Smart groups. `isSmartGroup(proxy)` and
+`isSmartConnection(connection)` check wire shapes (`type === 'Smart'` with a
+string `all` array, and non-empty `metadata.smartBlock`), not backend identity.
+
+The extension implements:
+
+- `groups.listWeights(options?)` via `GET /group/weights`: normalizes Go `nil`
+  per-group slices (`null`) to `[]` while preserving `errors`, `message`, and
+  unknown wire fields.
+- `groups.getWeights(name, options?)` via `GET /group/{name}/weights`: unwraps
+  `weights` (normalizing `null` to `[]`).
+- `cache.flushSmart(options?)` via `POST /cache/smart/flush` (204).
+- `cache.flushSmartConfig(config, options?)` via
+  `POST /cache/smart/flush/{config}` (204).
+- `connections.block(id, options?)` via `DELETE /connections/smart/{id}` (204):
+  marks `smartBlock` as `"blocked"` and closes the connection.
+- `system.upgradeLgbm(options?)` via `POST /upgrade/lgbm`: decodes
+  `MaintenanceResult` and rejects non-`ok` statuses with `OperationError`
+  (omitted by the server when running in `embedMode`).
+
+Protocol references: `vernesong/mihomo` (`Alpha` branch, commit
+`1348c4d2dee81f6941443b3d8b8a78a602b3d89c`)
+[groups.go](https://github.com/vernesong/mihomo/blob/1348c4d2dee81f6941443b3d8b8a78a602b3d89c/hub/route/groups.go),
+[cache.go](https://github.com/vernesong/mihomo/blob/1348c4d2dee81f6941443b3d8b8a78a602b3d89c/hub/route/cache.go),
+[connections.go](https://github.com/vernesong/mihomo/blob/1348c4d2dee81f6941443b3d8b8a78a602b3d89c/hub/route/connections.go),
+and
+[upgrade.go](https://github.com/vernesong/mihomo/blob/1348c4d2dee81f6941443b3d8b8a78a602b3d89c/hub/route/upgrade.go).
+The kernel suite also checks Smart groups, weights, cache flushes, LightGBM
+model updates, and connection blocking against a real `vernesong/mihomo` test
+server at revision `1348c4d2dee81f6941443b3d8b8a78a602b3d89c`.
+See [examples/smart.ts](examples/smart.ts) for caller-side helpers.
+
 ## Subscriptions and cleanup
 
 Streams connect when iteration starts and support one consumer. WebSocket is the
@@ -262,7 +325,8 @@ an HTTPS controller endpoint, which produces WSS subscription URLs.
 ## Kernel compatibility tests
 
 `bun run test:kernels` builds and starts two real Go test servers, one using
-sing-box replaced with reF1nd/sing-box `reF1nd-testing-next`, the other using mihomo `v1.19.34`.
+sing-box replaced with reF1nd/sing-box `reF1nd-testing-next`, the other using
+mihomo replaced with `vernesong/mihomo` `Alpha` (`1348c4d2dee81f6941443b3d8b8a78a602b3d89c`).
 The dependencies and checksums are pinned in separate Go modules under
 [`test/servers/`](test/servers/README.md). This suite also runs in CI.
 

@@ -14,7 +14,7 @@ await Promise.all(
     } else {
       args.push(
         '-ldflags',
-        '-X github.com/metacubex/mihomo/constant.Version=v1.19.34',
+        '-X github.com/metacubex/mihomo/constant.Version=alpha-smart-1348c4d',
       )
     }
     args.push(

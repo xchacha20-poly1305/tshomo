@@ -5,6 +5,17 @@ import {
   type RefindRule,
 } from '../../src/extensions/refind.js'
 import {
+  smart,
+  isSmartGroup,
+  isSmartConnection,
+  isSmartNodeRank,
+  type SmartConnection,
+  type SmartExtension,
+  type SmartGroup,
+  type SmartNodeRank,
+  type SmartWeightsSnapshot,
+} from '../../src/extensions/smart.js'
+import {
   createClashClient,
   type ConfigPatch,
   type Config,
@@ -154,3 +165,61 @@ void invalidConfig
 void invalidTunValue
 void singBoxDns
 void invalidDns
+
+const smartClient: SmartExtension = client.extend(smart)
+const allWeights: Promise<SmartWeightsSnapshot> =
+  smartClient.groups.listWeights()
+const groupWeights: Promise<SmartNodeRank[]> =
+  smartClient.groups.getWeights('Smart')
+const flushedAll: Promise<void> = smartClient.cache.flushSmart()
+const flushedConfig: Promise<void> =
+  smartClient.cache.flushSmartConfig('config.yaml')
+const blockedConn: Promise<void> = smartClient.connections.block('conn-id')
+const upgradedLgbm: Promise<import('../../src/index.js').MaintenanceResult> =
+  smartClient.system.upgradeLgbm()
+// @ts-expect-error flushSmart does not accept a config name argument.
+void smartClient.cache.flushSmart('config.yaml')
+// @ts-expect-error getWeights requires a string group name.
+void smartClient.groups.getWeights(123)
+
+function narrowSmart(proxy: Proxy, connection: Connection, rawRank: unknown) {
+  if (isSmartGroup(proxy)) {
+    const narrowedGroup: SmartGroup = proxy
+    const lgbm: boolean | undefined = narrowedGroup.useLightGBM
+    void lgbm
+  }
+  if (isSmartConnection(connection)) {
+    const narrowedConn: SmartConnection = connection
+    const blockState: string = narrowedConn.metadata.smartBlock
+    void blockState
+  }
+  if (isSmartNodeRank(rawRank)) {
+    const rank: SmartNodeRank = rawRank
+    const weight: number = rank.Weight
+    void weight
+  }
+}
+
+const badSmartGroup: SmartGroup = {
+  name: 'Smart',
+  type: 'Smart',
+  all: ['A'],
+  // @ts-expect-error tolerance must be numeric.
+  tolerance: '50',
+}
+const badSmartRank: SmartNodeRank = {
+  Name: 'A',
+  Rank: 'MostUsed',
+  // @ts-expect-error Weight must be numeric.
+  Weight: '100',
+}
+
+void allWeights
+void groupWeights
+void flushedAll
+void flushedConfig
+void blockedConn
+void upgradedLgbm
+void narrowSmart
+void badSmartGroup
+void badSmartRank

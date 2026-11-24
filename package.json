@@ -18,6 +18,10 @@
     "./extensions/refind": {
       "types": "./dist/extensions/refind.d.ts",
       "import": "./dist/extensions/refind.js"
+    },
+    "./extensions/smart": {
+      "types": "./dist/extensions/smart.d.ts",
+      "import": "./dist/extensions/smart.js"
     }
   },
   "files": [

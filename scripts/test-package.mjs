@@ -36,10 +36,30 @@ try {
     }
     const { createClashClient } = await import('tshomo')
     const { refind, isRefindRule } = await import('tshomo/extensions/refind')
+    const {
+      smart,
+      isSmartGroup,
+      isSmartConnection,
+      isSmartNodeRank,
+    } = await import('tshomo/extensions/smart')
     const client = createClashClient({ baseUrl: 'http://localhost/controller/' })
     const extension = client.extend(refind)
+    const smartExtension = client.extend(smart)
     if (typeof extension.rules.toggleByUuid !== 'function' || isRefindRule({ type: 'x', payload: '', proxy: 'x' })) {
       throw new Error('Invalid reF1nd extension exports')
+    }
+    if (
+      typeof smartExtension.groups.listWeights !== 'function' ||
+      typeof smartExtension.groups.getWeights !== 'function' ||
+      typeof smartExtension.cache.flushSmart !== 'function' ||
+      typeof smartExtension.cache.flushSmartConfig !== 'function' ||
+      typeof smartExtension.connections.block !== 'function' ||
+      typeof smartExtension.system.upgradeLgbm !== 'function' ||
+      isSmartGroup({ name: 'x', type: 'Selector', all: [] }) ||
+      isSmartConnection({ id: '1', upload: 0, download: 0, start: 0, chains: [], metadata: {} }) ||
+      isSmartNodeRank(null)
+    ) {
+      throw new Error('Invalid Smart extension exports')
     }
     client.dispose()
     globalThis.fetch = originalFetch
@@ -56,6 +76,17 @@ try {
     join(consumer, 'check.ts'),
     `import { createClashClient, type ConfigPatch } from 'tshomo'
     import { refind, isRefindRule, type RefindExtension, type RefindRule } from 'tshomo/extensions/refind'
+    import {
+      smart,
+      isSmartGroup,
+      isSmartConnection,
+      isSmartNodeRank,
+      type SmartExtension,
+      type SmartGroup,
+      type SmartConnection,
+      type SmartNodeRank,
+      type SmartWeightsSnapshot,
+    } from 'tshomo/extensions/smart'
     const patch: ConfigPatch = { tun: { enable: true }, 'mixed-port': 7890 }
     const client = createClashClient({ baseUrl: 'http://localhost' })
     const groups: Promise<import('tshomo').Proxy[]> = client.groups.list()
@@ -98,7 +129,38 @@ try {
     void narrowRule
     // @ts-expect-error fork extension must not leak into core exports
     import { refind as coreRefind } from 'tshomo'
+    // @ts-expect-error smart extension must not leak into core exports
+    import { smart as coreSmart } from 'tshomo'
     void coreRefind
+    void coreSmart
+    const smartClient: SmartExtension = client.extend(smart)
+    const weights: Promise<SmartWeightsSnapshot> = smartClient.groups.listWeights()
+    const groupWeights: Promise<SmartNodeRank[]> = smartClient.groups.getWeights('Smart')
+    const flushed: Promise<void> = smartClient.cache.flushSmart()
+    const flushedCfg: Promise<void> = smartClient.cache.flushSmartConfig('cfg')
+    const blocked: Promise<void> = smartClient.connections.block('id')
+    const lgbm: Promise<import('tshomo').MaintenanceResult> = smartClient.system.upgradeLgbm()
+    void weights
+    void groupWeights
+    void flushed
+    void flushedCfg
+    void blocked
+    void lgbm
+    function narrowSmart(proxy: import('tshomo').Proxy, conn: import('tshomo').Connection) {
+      if (isSmartGroup(proxy)) {
+        const g: SmartGroup = proxy
+        void g.useLightGBM
+      }
+      if (isSmartConnection(conn)) {
+        const c: SmartConnection = conn
+        void c.metadata.smartBlock
+      }
+      if (isSmartNodeRank({ Name: 'A', Rank: 'MostUsed', Weight: 1 })) {
+        return true
+      }
+      return false
+    }
+    void narrowSmart
     void groups
     void client.configs.patch(patch)
     // @ts-expect-error incorrect known config field
@@ -153,11 +215,13 @@ try {
     metafile: true,
   })
   if (
-    Object.keys(coreBundle.metafile.inputs).some((path) =>
-      path.endsWith('/extensions/refind.js'),
+    Object.keys(coreBundle.metafile.inputs).some(
+      (path) =>
+        path.endsWith('/extensions/refind.js') ||
+        path.endsWith('/extensions/smart.js'),
     )
   ) {
-    throw new Error('Core entry point loaded the optional reF1nd extension')
+    throw new Error('Core entry point loaded an optional extension')
   }
   console.log(
     'Packed ESM import, TS 7 declarations, private exports and browser bundle passed',
